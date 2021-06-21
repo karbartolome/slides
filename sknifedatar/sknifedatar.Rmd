@@ -259,7 +259,12 @@ wf$fit$fit$fit
 # Workflowsets en múltiples series
 
 ---
-The end
+## Contactos ✉
+
+Karina Bartolome, [Linkedin](https://www.linkedin.com/in/karinabartolome/), [Twitter](https://twitter.com/karbartolome), [Github](https://github.com/karbartolome), [Blog](https://karbartolome-blog.netlify.app/).
+
+Rafael Zambrano, [Linkedin](https://www.linkedin.com/in/rafael-zambrano/), [Twitter](https://twitter.com/rafa_zamr), [Github](https://github.com/rafzamb), [Blog](https://rafael-zambrano-blog-ds.netlify.app/).
+
 ---
 
 
