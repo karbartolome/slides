@@ -7,6 +7,11 @@ output:
   xaringan::moon_reader:
     css: "xaringan-themer.css"
 ---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, 
+                      message = FALSE, 
+                      comment=FALSE)
+```
 
 ```{r xaringan-themer, include=FALSE, warning=FALSE}
 library(xaringanthemer)
@@ -90,6 +95,7 @@ knitr::include_graphics('https://media1.tenor.com/images/5998dc6b4576b29ba1d61a0
 ```{r, message=FALSE}
 library(sknifedatar)
 library(modeltime)
+library(workflowsets)
 library(rsample)
 library(tidymodels)
 library(tidyverse)
@@ -110,14 +116,13 @@ xaringanExtra::use_panelset()
 ---
 
 # Datos
-**Estimador Mensual de Actividad Económica (Argentina)** 
+**Consumo residencial de gas 4 estados de Estados Unidos, entre 1989 y 2020** 
 
-Se busca estimar cuál hubiera sido la evolución de los indicadores de no haber existido pandemia.
 --
 ```{r}
-data <- sknifedatar::emae_series %>% 
-  filter(sector %in% c('Transporte y comunicaciones','Comercio',
-                       'Industria manufacturera','Mineria'))
+data <-  USgas::us_residential %>% rename(value=y) %>%  
+  filter(state %in%  c('Nevada','Maine',
+                       'Hawaii','West Virginia'))
 ```
 --
 ```{r, echo=FALSE}
@@ -128,39 +133,25 @@ data %>% head(5) %>% kableExtra::kable(format = "html")
 
 ### Evolución y momentos anómalos
 ```{r, fig.width=10, fig.height=5, message=FALSE, eval=FALSE}
-data %>% group_by(sector) %>%
+data %>% group_by(state) %>%
   plot_anomaly_diagnostics(date, value) 
 ```
 
 ```{r, fig.width=10, fig.height=5, message=FALSE, echo=FALSE}
-data %>% group_by(sector) %>%
+data %>% group_by(state) %>%
   plot_anomaly_diagnostics(date, value, .anom_size = 1, .interactive=FALSE,
     .facet_ncol = 2, .max_anomalies = 0.05, .facet_scales = 'free_y') 
-```
-
----
-
-### Dataframes anidados
-
-```{r}
-nest_data <- data %>% nest(nested_column = -sector)
-```
---
-```{r, echo=FALSE, out.height='10%'}
-reactable::reactable(nest_data, details = function(index) {
-  data <- data[data$sector == nest_data$sector[index], c('date','value')] %>% 
-    mutate(value = round(value, 2))
-  htmltools::div(style = "padding: 10px", reactable::reactable(data, outlined = TRUE))
-}, defaultPageSize=4) 
 ```
 
 ---
 ### Descomposición de series de tiempo
 
 .panelset[
-.panel[.panel-name[Comercio]
+.panel[.panel-name[Hawaii]
 
 ```{r, message=FALSE, echo=FALSE, fig.width=10, fig.height=6}
+nest_data <- data %>% nest(nested_column = -state)
+
 nest_plots <- nest_data %>%
   mutate(ts_plots = map(nested_column, 
           ~  plot_stl_diagnostics(.x, 
@@ -175,38 +166,35 @@ nest_plots$ts_plots[[1]]
 ```
 ]
 
-.panel[.panel-name[Transporte]
+.panel[.panel-name[Maine]
 
 ```{r, echo=FALSE, fig.width=10, fig.height=6}
 nest_plots$ts_plots[[2]]
 ```
 ]
 
-.panel[.panel-name[Minería]
+.panel[.panel-name[Nevada]
 
 ```{r, echo=FALSE, fig.width=10, fig.height=6}
 nest_plots$ts_plots[[3]]
 ```
 ]
 
-.panel[.panel-name[Industria manufacturera]
+.panel[.panel-name[West Virginia]
 
 ```{r, echo=FALSE, fig.width=10, fig.height=6}
 nest_plots$ts_plots[[4]]
 ```
 ]
-
 ]
-
 ---
 # Una serie y un modelo
 
 ```{r, fig.height=3, fig.width=10}
-data_transporte <- data %>% 
-  filter(sector=='Transporte y comunicaciones')
+data_hawaii <- data %>% 
+  filter(state=='Hawaii')
 
-splits <- data_transporte %>%  
-  filter(date<'2020-01-02') %>%  
+splits <- data_hawaii %>%  
   initial_time_split(prop = 0.8)
 ```
 --
@@ -218,7 +206,7 @@ splits %>% tk_time_series_cv_plan() %>%
 ---
 **Receta**
 ```{r}
-receta <- recipe(value ~ ., data = training(splits) %>% select(-sector)) %>%
+receta <- recipe(value ~ ., data = training(splits) %>% select(-state)) %>%
     step_date(date, features = c("month", "quarter", "year"))
 ```
 
@@ -228,9 +216,7 @@ receta %>% prep() %>% juice() %>% head(2) %>% kableExtra::kable()
 --
 **Modelo**
 ```{r}
-autoarima_boost_reg = arima_boost(
-    min_n = 2, learn_rate = 0.015
-  ) %>% 
+autoarima_boost_reg = arima_boost() %>% 
   set_engine('auto_arima_xgboost') 
 ```
 --
@@ -241,6 +227,7 @@ wf <- workflow() %>%
   add_model(autoarima_boost_reg) %>% 
   fit(training(splits))
 ```
+
 ---
 **Modelo ajustado**
 ```{r, echo=FALSE}
@@ -254,10 +241,188 @@ wf$fit$fit$fit
 ## Proyección a futuro
 
 ---
+# Dataframes anidados
+
+```{r}
+nest_data <- data %>% nest(nested_column = -state)
+```
+--
+```{r, echo=FALSE, out.height='10%'}
+reactable::reactable(nest_data, details = function(index) {
+  data <- data[data$state == nest_data$state[index], c('date','value')] %>% 
+    mutate(value = round(value, 2))
+  htmltools::div(style = "padding: 10px", reactable::reactable(data, outlined = TRUE))
+}, defaultPageSize=4) 
+```
+
+---
 # Múltiples modelos para múltiples series
 
 ---
 # Workflowsets en múltiples series
+
+### Recetas
+```{r}
+# Receta base
+recipe_base <- recipe(value~date, data=data_hawaii)
+
+# Características según fecha
+recipe_date_extrafeatures <- recipe_base %>% 
+  step_date(date, features = c('month','year','quarter','semester'))
+
+# Resagos
+recipe_date_extrafeatures_lag <- recipe_date_extrafeatures %>% 
+  step_lag(value, lag = 1:6) %>% 
+  step_ts_impute(all_numeric(), period=365)
+
+# Fourier
+recipe_date_extrafeatures_fourier <-recipe_date_extrafeatures  %>% 
+  step_fourier(date, period = 365/12, K = 1)
+```
+
+---
+### Modelos
+```{r}
+# prophet_xgboost
+prophet_boost <- prophet_boost(mode = 'regression') %>% 
+  set_engine("prophet_xgboost")
+
+# nnetar
+nnetar <- nnetar_reg() %>% 
+  set_engine("nnetar")
+
+#auto_arima_xgboost
+auto_arima_boost <- arima_boost() %>% 
+  set_engine('auto_arima_xgboost')
+```
+---
+### Workflowsets
+```{r}
+wfsets <- workflow_set(
+  preproc = list(
+    base                  = recipe_base,
+    extrafeatures         = recipe_date_extrafeatures,
+    extrafeatures_lag     = recipe_date_extrafeatures_lag,
+    extrafeatures_fourier = recipe_date_extrafeatures_fourier
+  ),
+  models  = list(
+    M_arima_boost       = auto_arima_boost,
+    M_prophet_boost     = prophet_boost,
+    M_nnetar            = nnetar
+  ),
+  cross   = TRUE
+) 
+```
+---
+
+### Ajuste de modelos
+```{r, eval=FALSE}
+wfs_multifit <- modeltime_wfs_multifit(serie = nest_data,
+                                       .prop = 0.8,
+                                       .wfs  = wfsets)
+```
+
+```{r, echo=FALSE}
+# saveRDS(wfs_multifit, 'modelos/wfs_multifit.rds')
+wfs_multifit <- readRDS('modelos/wfs_multifit.rds')
+```
+
+.panelset[
+.panel[.panel-name[Hawaii]
+
+```{r, message=FALSE, echo=FALSE, fig.width=10, fig.height=5}
+plots <- wfs_multifit$models_accuracy %>% 
+  select(-.model_id) %>%  
+  rename(.model_id=.model_names) %>% mutate(.fit_model = '') %>% 
+  group_by(name_serie) %>% 
+  nest() %>% 
+  mutate(plot = map(data, ~ modeltime_wfs_heatmap(., metric = 'rsq',
+                                                  low_color = '#ece2f0',
+                                                  high_color = '#02818a'))) %>% 
+  ungroup()
+
+plots$plot[[1]]
+```
+]
+
+.panel[.panel-name[Maine]
+
+```{r, echo=FALSE, fig.width=10, fig.height=5}
+plots$plot[[2]]
+```
+]
+
+.panel[.panel-name[Nevada]
+
+```{r, echo=FALSE, fig.width=10, fig.height=5}
+plots$plot[[3]]
+```
+]
+
+.panel[.panel-name[West Virginia]
+
+```{r, echo=FALSE, fig.width=10, fig.height=5}
+plots$plot[[4]]
+```
+]
+]
+---
+### Proyecciones
+```{r, message=FALSE, warning=FALSE}
+wfs_multiforecast <- modeltime_wfs_multiforecast(
+  wfs_multifit$table_time, .prop=0.8)
+```
+
+```{r, echo=FALSE, fig.height=7, fig.width=10}
+wfs_multiforecast %>% 
+  select(state, nested_forecast) %>% 
+  unnest(nested_forecast) %>% 
+  group_by(state) %>% 
+  plot_modeltime_forecast(
+    .legend_max_width = 12,
+    .facet_ncol = 2, 
+    .line_size = 0.5,
+    .interactive = FALSE,
+    .facet_scales = 'free_y',
+    .title='Proyecciones') +
+  theme(legend.position='bottom')
+```
+---
+### Selección del mejor modelo
+```{r}
+wfs_bests<- modeltime_wfs_multibestmodel(
+  .table = wfs_multiforecast,
+  .metric = "rsq",
+  .minimize = FALSE
+)
+```
+
+### Reentrenamiento para todos los datos
+
+```{r, , message=FALSE, warning=FALSE, comment=FALSE}
+wfs_refit <- modeltime_wfs_multirefit(wfs_bests)
+```
+---
+### Proyecciones a 12 meses
+
+```{r, message=FALSE, warning=FALSE, comment=FALSE}
+wfs_forecast <- modeltime_wfs_multiforecast(wfs_refit, .h = "12 month")
+```
+
+```{r, echo=FALSE}
+wfs_forecast %>% 
+  select(state, nested_forecast) %>% 
+  unnest(nested_forecast) %>% 
+  group_by(state) %>% 
+  plot_modeltime_forecast(
+    .legend_max_width = 12,
+    .facet_ncol = 1, 
+    .line_size = 0.5,
+    .interactive = FALSE,
+    .facet_scales = 'free_y',
+    .title='Proyecciones')+
+  theme(legend.position='right')
+```
 
 ---
 
