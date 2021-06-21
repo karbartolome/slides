@@ -22,19 +22,17 @@ style_mono_accent(
 ```
 
 ```{css, echo=FALSE}
-    /* Table width = 100% max-width */
+/* Table width = 100% max-width */
+.remark-slide table{width: 100%;}
 
-    .remark-slide table{
-        width: 100%;
-    }
+/* Change the background color to white for shaded rows (even rows) */
+.remark-slide thead, .remark-slide tr:nth-child(2n) {
+  background-color: white;
+  .tfoot .td {background-color: white}
+}
 
-    /* Change the background color to white for shaded rows (even rows) */
-
-    .remark-slide thead, .remark-slide tr:nth-child(2n) {
-        background-color: white;
-      
-    .tfoot .td { background-color: white}
-    }
+.bold-last-item > ul > li:last-of-type,
+.bold-last-item > ol > li:last-of-type {font-weight: bold;}
 ```
 
 
@@ -59,7 +57,7 @@ knitr::include_graphics('images/modeltime.png')
 ```{r, eval=FALSE}
 install.packages('sknifedatar')
 ```
-
+--
 ```{r, echo=FALSE, out.width='20%', out.height='20%', fig.align='center'}
 knitr::include_graphics('images/sknifedatar.png')
 ```
@@ -73,6 +71,10 @@ knitr::include_graphics('images/sknifedatar.png')
 ---
 
 # Librerías utilizadas
+
+```{r, echo=FALSE, out.width='20%', fig.align='center'}
+knitr::include_graphics('https://media1.tenor.com/images/5998dc6b4576b29ba1d61a084f3d79d0/tenor.gif?itemid=5772115')
+```
 
 ```{r, message=FALSE}
 library(sknifedatar)
@@ -92,26 +94,32 @@ xaringanExtra::use_panelset()
 ---
 
 # Datos
-Estimador Mensual de Actividad Económica (Argentina)
+**Estimador Mensual de Actividad Económica (Argentina)** 
 
+Se busca estimar cuál hubiera sido la evolución de los indicadores de no haber existido pandemia.
+--
 ```{r}
 data <- sknifedatar::emae_series %>% 
   filter(sector %in% c('Transporte y comunicaciones','Comercio',
                        'Industria manufacturera','Mineria'))
 ```
-
+--
 ```{r, echo=FALSE}
 data %>% head(5) %>% kableExtra::kable(format = "html")
 ```
 
 ---
 
-### Evolución en los sectores seleccionados
+### Evolución y momentos anómalos
+```{r, fig.width=10, fig.height=5, message=FALSE, eval=FALSE}
+data %>% group_by(sector) %>%
+  plot_anomaly_diagnostics(date, value) 
+```
 
-```{r, fig.width=10}
-data %>% group_by(sector) %>% 
-  plot_time_series(.date_var = date, .value=value, 
-                   .smooth=FALSE, .facet_ncol = 2)
+```{r, fig.width=10, fig.height=5, message=FALSE, echo=FALSE}
+data %>% group_by(sector) %>%
+  plot_anomaly_diagnostics(date, value, .anom_size = 1, .interactive=FALSE,
+    .facet_ncol = 2, .max_anomalies = 0.05, .facet_scales = 'free_y') 
 ```
 
 ---
@@ -121,7 +129,7 @@ data %>% group_by(sector) %>%
 ```{r}
 nest_data <- data %>% nest(nested_column = -sector)
 ```
-
+--
 ```{r, echo=FALSE, out.height='10%'}
 reactable::reactable(nest_data, details = function(index) {
   data <- data[data$sector == nest_data$sector[index], c('date','value')] %>% 
@@ -131,11 +139,6 @@ reactable::reactable(nest_data, details = function(index) {
 ```
 
 ---
-
-### Detección de anomalías
-
----
-
 ### Descomposición de series de tiempo
 
 .panelset[
@@ -181,17 +184,55 @@ nest_plots$ts_plots[[4]]
 ---
 # Una serie y un modelo
 
-```{r, fig.height=4, fig.width=10}
-data_comercio <- data %>% filter(sector=='Comercio')
+```{r, fig.height=3, fig.width=10}
+data_transporte <- data %>% 
+  filter(sector=='Transporte y comunicaciones')
 
-data_comercio %>% 
-  plot_time_series(.date_var = date, .value = value, .interactive = TRUE) 
+splits <- data_transporte %>%  filter(date<'2020-01-02') %>%  
+  initial_time_split(prop = 0.8)
+```
+--
+```{r, fig.height=3, fig.width=10}
+splits %>% tk_time_series_cv_plan() %>%
+  plot_time_series_cv_plan(date, value) 
 ```
 
+---
+**Receta**
+```{r}
+receta <- recipe(value ~ ., data = training(splits) %>% select(-sector)) %>%
+    step_date(date, features = c("month", "quarter", "year"), ordinal = TRUE)
+```
+--
+**Modelo**
+```{r}
+autoarima_boost_reg = arima_boost() %>% 
+  set_engine('auto_arima_xgboost') 
+```
+--
+**Ajujste**
+```{r}
+wf <- workflow() %>% 
+  add_recipe(receta) %>% 
+  add_model(autoarima_boost_reg) %>% 
+  fit(training(splits))
+```
 
+---
+## Predicción sobre test
 
+---
+## Proyección a futuro
 
+---
+# Múltiples modelos para múltiples series
 
+---
+# Workflowsets en múltiples series
+
+---
+The end
+---
 
 
 
