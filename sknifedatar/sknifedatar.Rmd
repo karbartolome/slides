@@ -1,0 +1,154 @@
+---
+title: "Sknifedatar"
+subtitle: "A modeltime extension"
+author: "Rafael Zambrano & Karina Bartolomé"
+date: '2021-06-24'
+output: 
+  xaringan::moon_reader:
+    css: "xaringan-themer.css"
+    includes:
+      after_body: "collapseoutput.html"
+---
+
+```{r xaringan-themer, include=FALSE, warning=FALSE}
+library(xaringanthemer)
+
+style_mono_accent(
+  title_slide_background_color	='white',
+  title_slide_text_color = 'darkblue',
+  base_color = "darkblue",
+  header_font_google = google_font("Josefin Sans"),
+  text_font_google   = google_font("Montserrat", "300", "300i"),
+  code_font_google   = google_font("Fira Mono")
+)
+
+xaringanExtra::use_progress_bar(color = "#0051BA", location = "top")
+```
+
+# ¿Qué es #modeltime?
+
+---
+
+```{r, eval=FALSE}
+install.packages('sknifedatar')
+```
+
+- Ajuste de múltiples modelos en múltiples series de tiempo
+
+- Ajuste de múltiples modelos y recetas de preprocesamiento sobre múltiples modelos
+
+- Extensión adicional: tabs en Distill Blogs
+
+---
+
+# Librerías utilizadas
+
+```{r, message=FALSE}
+library(sknifedatar)
+library(tidyverse)
+library(tidymodels)
+library(modeltime)
+library(anomalize) 
+library(rsample)
+library(timetk)
+library(gt)
+library(plotly)
+```
+
+```{r, echo=FALSE}
+xaringanExtra::use_panelset()
+```
+
+---
+
+# Datos
+Estimador Mensual de Actividad Económica (Argentina)
+
+```{r}
+data <- sknifedatar::emae_series %>% 
+  filter(sector %in% c('Transporte y comunicaciones','Comercio',
+                       'Industria manufacturera','Mineria'))
+```
+
+```{r, echo=FALSE}
+data %>% head(5) %>% gt() %>% tab_header('EMAE')
+```
+
+---
+# Una serie y un modelo
+
+```{r, fig.height=4, fig.width=10}
+data_comercio <- data %>% filter(sector=='Comercio')
+
+data_comercio %>% 
+  plot_time_series(.date_var = date, .value = value, .interactive = TRUE) 
+```
+
+
+---
+
+```{r}
+nest_data <- data %>% nest(nested_column = -sector)
+```
+
+```{r, echo=FALSE}
+reactable::reactable(nest_data, details = function(index) {
+  data <- data[data$sector == nest_data$sector[index], c('date','value')] %>% 
+    mutate(value = round(value, 2))
+  htmltools::div(style = "padding: 12px", reactable::reactable(data, outlined = TRUE))
+}, defaultPageSize=4) 
+```
+
+---
+```{r, fig.width=10}
+data %>% group_by(sector) %>% 
+  plot_time_series(.date_var = date, .value=value, 
+                   .smooth=FALSE, .facet_ncol = 2)
+```
+
+---
+
+.panelset[
+.panel[.panel-name[Comercio]
+
+```{r, message=FALSE, echo=FALSE, fig.width=10, fig.height=7}
+nest_plots <- nest_data %>%
+  mutate(ts_plots = map(nested_column, 
+          ~  plot_stl_diagnostics(.x, 
+              .date_var=date, 
+              .value=value, 
+              .frequency = 'auto',
+              .trend = 'auto', 
+              .feature_set = c("observed", "season", "trend", "remainder"))
+          ))
+nest_plots$ts_plots[[1]]
+```
+]
+
+.panel[.panel-name[Transporte]
+
+```{r, echo=FALSE, fig.width=10, fig.height=7}
+nest_plots$ts_plots[[2]]
+```
+]
+
+.panel[.panel-name[Minería]
+
+```{r, echo=FALSE, fig.width=10, fig.height=7}
+nest_plots$ts_plots[[3]]
+```
+]
+
+.panel[.panel-name[Industria manufacturera]
+
+```{r, echo=FALSE, fig.width=10, fig.height=7}
+nest_plots$ts_plots[[4]]
+```
+]
+
+]
+
+
+
+
+
