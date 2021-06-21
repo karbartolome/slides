@@ -61,20 +61,31 @@ install.packages('sknifedatar')
 ```{r, echo=FALSE, out.width='20%', out.height='20%', fig.align='center'}
 knitr::include_graphics('images/sknifedatar.png')
 ```
+Incluye: 
+- **Funciones multifit**: Múltiples modelos en múltiples series de tiempo (sin datos de panel)
+- **Workflowsets**: Worklowsets con modeltime
+- **Workflowset multifit**: Worklowset en múltiples series (sin datos de panel)
+- **Automagic tabs**: Función para generar automáticamente tabs en artículos distill o rmd
+- **Ventanas móviles**: Partición de datos en ventanas móviles
 
-- Ajuste de múltiples modelos en múltiples series de tiempo
+---
+# Agenda para hoy
 
-- Ajuste de múltiples modelos y recetas de preprocesamiento sobre múltiples modelos
+```{r, echo=FALSE, out.width='30%', fig.align='center'}
+knitr::include_graphics('https://media1.tenor.com/images/5998dc6b4576b29ba1d61a084f3d79d0/tenor.gif?itemid=5772115')
+```
 
-- Extensión adicional: tabs en Distill Blogs
+- **Introducción a modeltime**
+
+- **Multifit**: Ajuste de múltiples modelos en múltiples series de tiempo
+
+- **Workflowsets**: Ajuste de múltiples modelos y recetas de preprocesamiento sobre múltiples modelos
+
+- **Extensión**: tabs en Distill / Rmd
 
 ---
 
 # Librerías utilizadas
-
-```{r, echo=FALSE, out.width='20%', fig.align='center'}
-knitr::include_graphics('https://media1.tenor.com/images/5998dc6b4576b29ba1d61a084f3d79d0/tenor.gif?itemid=5772115')
-```
 
 ```{r, message=FALSE}
 library(sknifedatar)
@@ -86,6 +97,11 @@ library(timetk)
 library(anomalize) 
 library(gt)
 ```
+
+```{r, echo=FALSE, out.width='50%', fig.align='center'}
+knitr::include_graphics('https://media1.tenor.com/images/591f5618423822e347cf9c9899bdf697/tenor.gif?itemid=9448505')
+```
+
 
 ```{r, echo=FALSE}
 xaringanExtra::use_panelset()
@@ -188,7 +204,8 @@ nest_plots$ts_plots[[4]]
 data_transporte <- data %>% 
   filter(sector=='Transporte y comunicaciones')
 
-splits <- data_transporte %>%  filter(date<'2020-01-02') %>%  
+splits <- data_transporte %>%  
+  filter(date<'2020-01-02') %>%  
   initial_time_split(prop = 0.8)
 ```
 --
@@ -201,12 +218,18 @@ splits %>% tk_time_series_cv_plan() %>%
 **Receta**
 ```{r}
 receta <- recipe(value ~ ., data = training(splits) %>% select(-sector)) %>%
-    step_date(date, features = c("month", "quarter", "year"), ordinal = TRUE)
+    step_date(date, features = c("month", "quarter", "year"))
+```
+
+```{r, echo=FALSE}
+receta %>% prep() %>% juice() %>% head(2) %>% kableExtra::kable()
 ```
 --
 **Modelo**
 ```{r}
-autoarima_boost_reg = arima_boost() %>% 
+autoarima_boost_reg = arima_boost(
+    min_n = 2, learn_rate = 0.015
+  ) %>% 
   set_engine('auto_arima_xgboost') 
 ```
 --
@@ -216,6 +239,11 @@ wf <- workflow() %>%
   add_recipe(receta) %>% 
   add_model(autoarima_boost_reg) %>% 
   fit(training(splits))
+```
+---
+**Modelo ajustado**
+```{r, echo=FALSE}
+wf$fit$fit$fit
 ```
 
 ---
