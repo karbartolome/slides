@@ -168,6 +168,7 @@ nest_plots <- nest_data %>%
               .value=value, 
               .frequency = 'auto',
               .trend = 'auto', 
+              .interactive=FALSE,
               .feature_set = c("observed", "season", "trend", "remainder"))
           ))
 nest_plots$ts_plots[[1]]
@@ -259,13 +260,15 @@ wf$fit$fit$fit
 # Workflowsets en múltiples series
 
 ---
+
+```{r, out.width='30%', echo=FALSE, fig.align='center'}
+knitr::include_graphics('https://media1.tenor.com/images/f6e068a5de7462f2dba479366e2b325d/tenor.gif?itemid=16536400')
+```
+
 ## Contactos ✉
 
-Karina Bartolome, [Linkedin](https://www.linkedin.com/in/karinabartolome/), [Twitter](https://twitter.com/karbartolome), [Github](https://github.com/karbartolome), [Blog](https://karbartolome-blog.netlify.app/).
-
-Rafael Zambrano, [Linkedin](https://www.linkedin.com/in/rafael-zambrano/), [Twitter](https://twitter.com/rafa_zamr), [Github](https://github.com/rafzamb), [Blog](https://rafael-zambrano-blog-ds.netlify.app/).
-
----
+Karina Bartolome [![Twitter Badge](https://img.shields.io/badge/-@karbartolome-1ca0f1?style=flat&labelColor=1ca0f1&logo=twitter&logoColor=white&link=https://twitter.com/karbartolome)](https://twitter.com/karbartolome) [![Linkedin Badge](https://img.shields.io/badge/-karina bartolome-blue?style=flat&logo=Linkedin&logoColor=white&link=https://www.linkedin.com/in/karinabartolome/)](https://www.linkedin.com/in/karinabartolome/) [![Github Badge](https://img.shields.io/badge/-karbartolome-black?style=flat&logo=Github&logoColor=white&link=https://github.com/karbartolome)](https://github.com/karbartolome) [![Website Badge](https://img.shields.io/badge/-Personal%20blog-47CCCC?style=flat&logo=Google-Chrome&logoColor=white&link=https://karbartolome-blog.netlify.app/)](https://karbartolome-blog.netlify.app/)
 
 
 
+Rafael Zambrano [![Twitter Badge](https://img.shields.io/badge/-@rafa_zamr-1ca0f1?style=flat&labelColor=1ca0f1&logo=twitter&logoColor=white&link=https://twitter.com/rafa_zamr)](https://twitter.com/rafa_zamr) [![Linkedin Badge](https://img.shields.io/badge/-rafael zambrano-blue?style=flat&logo=Linkedin&logoColor=white&link=https://www.linkedin.com/in/rafael-zambrano/)](https://www.linkedin.com/in/rafael-zambrano/) [![Github Badge](https://img.shields.io/badge/-rafzamb-black?style=flat&logo=Github&logoColor=white&link=https://github.com/rafzamb)](https://github.com/rafzamb) [![Website Badge](https://img.shields.io/badge/-Personal%20blog-47CCCC?style=flat&logo=Google-Chrome&logoColor=white&link=https://rafael-zambrano-blog-ds.netlify.app/)](https://rafael-zambrano-blog-ds.netlify.app/)
