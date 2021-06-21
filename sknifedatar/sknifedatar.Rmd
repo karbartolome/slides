@@ -6,8 +6,6 @@ date: '2021-06-24'
 output: 
   xaringan::moon_reader:
     css: "xaringan-themer.css"
-    includes:
-      after_body: "collapseoutput.html"
 ---
 
 ```{r xaringan-themer, include=FALSE, warning=FALSE}
@@ -21,16 +19,49 @@ style_mono_accent(
   text_font_google   = google_font("Montserrat", "300", "300i"),
   code_font_google   = google_font("Fira Mono")
 )
+```
 
+```{css, echo=FALSE}
+    /* Table width = 100% max-width */
+
+    .remark-slide table{
+        width: 100%;
+    }
+
+    /* Change the background color to white for shaded rows (even rows) */
+
+    .remark-slide thead, .remark-slide tr:nth-child(2n) {
+        background-color: white;
+      
+    .tfoot .td { background-color: white}
+    }
+```
+
+
+```{r, include=FALSE, warning=FALSE}
 xaringanExtra::use_progress_bar(color = "#0051BA", location = "top")
 ```
 
 # ¿Qué es #modeltime?
 
+Es un ecosistema desarrollado por Matt Dancho para realizar análisis de series de tiempo mediante un enfoque ordenado (o Tidy) con #tidymodels. 
+
+```{r, echo=FALSE, out.height='90%',out.width='90%',  fig.align='center'}
+knitr::include_graphics('images/modeltime.png')
+```
+
 ---
+
+# Sknifedatar
+
+#### Una extensión de modeltime
 
 ```{r, eval=FALSE}
 install.packages('sknifedatar')
+```
+
+```{r, echo=FALSE, out.width='20%', out.height='20%', fig.align='center'}
+knitr::include_graphics('images/sknifedatar.png')
 ```
 
 - Ajuste de múltiples modelos en múltiples series de tiempo
@@ -45,14 +76,13 @@ install.packages('sknifedatar')
 
 ```{r, message=FALSE}
 library(sknifedatar)
-library(tidyverse)
-library(tidymodels)
 library(modeltime)
-library(anomalize) 
 library(rsample)
+library(tidymodels)
+library(tidyverse)
 library(timetk)
+library(anomalize) 
 library(gt)
-library(plotly)
 ```
 
 ```{r, echo=FALSE}
@@ -71,35 +101,13 @@ data <- sknifedatar::emae_series %>%
 ```
 
 ```{r, echo=FALSE}
-data %>% head(5) %>% gt() %>% tab_header('EMAE')
+data %>% head(5) %>% kableExtra::kable(format = "html")
 ```
 
 ---
-# Una serie y un modelo
 
-```{r, fig.height=4, fig.width=10}
-data_comercio <- data %>% filter(sector=='Comercio')
+### Evolución en los sectores seleccionados
 
-data_comercio %>% 
-  plot_time_series(.date_var = date, .value = value, .interactive = TRUE) 
-```
-
-
----
-
-```{r}
-nest_data <- data %>% nest(nested_column = -sector)
-```
-
-```{r, echo=FALSE}
-reactable::reactable(nest_data, details = function(index) {
-  data <- data[data$sector == nest_data$sector[index], c('date','value')] %>% 
-    mutate(value = round(value, 2))
-  htmltools::div(style = "padding: 12px", reactable::reactable(data, outlined = TRUE))
-}, defaultPageSize=4) 
-```
-
----
 ```{r, fig.width=10}
 data %>% group_by(sector) %>% 
   plot_time_series(.date_var = date, .value=value, 
@@ -108,10 +116,32 @@ data %>% group_by(sector) %>%
 
 ---
 
+### Dataframes anidados
+
+```{r}
+nest_data <- data %>% nest(nested_column = -sector)
+```
+
+```{r, echo=FALSE, out.height='10%'}
+reactable::reactable(nest_data, details = function(index) {
+  data <- data[data$sector == nest_data$sector[index], c('date','value')] %>% 
+    mutate(value = round(value, 2))
+  htmltools::div(style = "padding: 10px", reactable::reactable(data, outlined = TRUE))
+}, defaultPageSize=4) 
+```
+
+---
+
+### Detección de anomalías
+
+---
+
+### Descomposición de series de tiempo
+
 .panelset[
 .panel[.panel-name[Comercio]
 
-```{r, message=FALSE, echo=FALSE, fig.width=10, fig.height=7}
+```{r, message=FALSE, echo=FALSE, fig.width=10, fig.height=6}
 nest_plots <- nest_data %>%
   mutate(ts_plots = map(nested_column, 
           ~  plot_stl_diagnostics(.x, 
@@ -127,26 +157,39 @@ nest_plots$ts_plots[[1]]
 
 .panel[.panel-name[Transporte]
 
-```{r, echo=FALSE, fig.width=10, fig.height=7}
+```{r, echo=FALSE, fig.width=10, fig.height=6}
 nest_plots$ts_plots[[2]]
 ```
 ]
 
 .panel[.panel-name[Minería]
 
-```{r, echo=FALSE, fig.width=10, fig.height=7}
+```{r, echo=FALSE, fig.width=10, fig.height=6}
 nest_plots$ts_plots[[3]]
 ```
 ]
 
 .panel[.panel-name[Industria manufacturera]
 
-```{r, echo=FALSE, fig.width=10, fig.height=7}
+```{r, echo=FALSE, fig.width=10, fig.height=6}
 nest_plots$ts_plots[[4]]
 ```
 ]
 
 ]
+
+---
+# Una serie y un modelo
+
+```{r, fig.height=4, fig.width=10}
+data_comercio <- data %>% filter(sector=='Comercio')
+
+data_comercio %>% 
+  plot_time_series(.date_var = date, .value = value, .interactive = TRUE) 
+```
+
+
+
 
 
 
