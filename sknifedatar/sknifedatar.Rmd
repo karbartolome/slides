@@ -13,13 +13,13 @@ knitr::opts_chunk$set(warning = FALSE,
                       comment=FALSE)
 ```
 
-```{r xaringan-themer, include=FALSE, warning=FALSE}
+```{r xaringan-themer, include=FALSE, warning=FALSE, eval=FALSE}
+# Para generar el .css pero igual ya está generado, no correr de vuelta y editar el archivo directamente 
 library(xaringanthemer)
-
 style_mono_accent(
-  title_slide_background_color	='white',
-  title_slide_text_color = 'darkblue',
-  base_color = "darkblue",
+  title_slide_background_color	='#ffffff',
+  title_slide_text_color = '#33407d',
+  base_color = "#33407d",
   header_font_google = google_font("Josefin Sans"),
   text_font_google   = google_font("Montserrat", "300", "300i"),
   code_font_google   = google_font("Fira Mono")
@@ -108,7 +108,6 @@ library(gt)
 knitr::include_graphics('https://media1.tenor.com/images/591f5618423822e347cf9c9899bdf697/tenor.gif?itemid=9448505')
 ```
 
-
 ```{r, echo=FALSE}
 xaringanExtra::use_panelset()
 ```
@@ -190,10 +189,15 @@ nest_plots$ts_plots[[4]]
 ---
 # Una serie y un modelo
 
+Se selecciona el estado de Hawaii
+
 ```{r, fig.height=3, fig.width=10}
 data_hawaii <- data %>% 
   filter(state=='Hawaii')
+```
 
+Se particiona el dataset en train y test
+```{r, fig.height=3, fig.width=10}
 splits <- data_hawaii %>%  
   initial_time_split(prop = 0.8)
 ```
@@ -204,7 +208,7 @@ splits %>% tk_time_series_cv_plan() %>%
 ```
 
 ---
-**Receta**
+**Receta**: Se crea una receta de preprocesamiento, incluye la fórmula a estimar y un paso adicional que añade variables en función de la fecha
 ```{r}
 receta <- recipe(value ~ ., data = training(splits) %>% select(-state)) %>%
     step_date(date, features = c("month", "quarter", "year"))
@@ -214,13 +218,13 @@ receta <- recipe(value ~ ., data = training(splits) %>% select(-state)) %>%
 receta %>% prep() %>% juice() %>% head(2) %>% kableExtra::kable()
 ```
 --
-**Modelo**
+**Modelo**: Se especifica el modelo a ajustar
 ```{r}
 autoarima_boost_reg = arima_boost() %>% 
   set_engine('auto_arima_xgboost') 
 ```
 --
-**Ajujste**
+**Ajujste**: Se genera un workflow añadiendo la receta y luego el modelo. Finalmente, se entrena con los datos de entrenamiento
 ```{r}
 wf <- workflow() %>% 
   add_recipe(receta) %>% 
@@ -230,7 +234,7 @@ wf <- workflow() %>%
 
 ---
 **Modelo ajustado**
-```{r, echo=FALSE}
+```{r, , tidy=TRUE, echo=FALSE}
 wf$fit$fit$fit
 ```
 
@@ -337,8 +341,9 @@ plots <- wfs_multifit$models_accuracy %>%
   group_by(name_serie) %>% 
   nest() %>% 
   mutate(plot = map(data, ~ modeltime_wfs_heatmap(., metric = 'rsq',
-                                                  low_color = '#ece2f0',
-                                                  high_color = '#02818a'))) %>% 
+                                                 low_color = '#ece2f0',
+                                                 high_color = '#1f356e'
+                                                 ))) %>% 
   ungroup()
 
 plots$plot[[1]]
@@ -373,20 +378,21 @@ wfs_multiforecast <- modeltime_wfs_multiforecast(
   wfs_multifit$table_time, .prop=0.8)
 ```
 
-```{r, echo=FALSE, fig.height=7, fig.width=10}
+```{r, echo=FALSE, fig.height=6, fig.width=14, fig.align='center'}
 wfs_multiforecast %>% 
   select(state, nested_forecast) %>% 
   unnest(nested_forecast) %>% 
   group_by(state) %>% 
   plot_modeltime_forecast(
-    .legend_max_width = 12,
+    .legend_max_width = 40,
     .facet_ncol = 2, 
     .line_size = 0.5,
     .interactive = FALSE,
     .facet_scales = 'free_y',
     .title='Proyecciones') +
-  theme(legend.position='bottom')
+  theme(legend.position='bottom', legend.margin=margin())
 ```
+
 ---
 ### Selección del mejor modelo
 ```{r}
@@ -402,26 +408,33 @@ wfs_bests<- modeltime_wfs_multibestmodel(
 ```{r, , message=FALSE, warning=FALSE, comment=FALSE}
 wfs_refit <- modeltime_wfs_multirefit(wfs_bests)
 ```
+
+```{r, echo=FALSE}
+#saveRDS(wfs_refit, 'modelos/wfs_refit.rds')
+wfs_refit <- readRDS('modelos/wfs_refit.rds')
+```
+
 ---
 ### Proyecciones a 12 meses
 
 ```{r, message=FALSE, warning=FALSE, comment=FALSE}
-wfs_forecast <- modeltime_wfs_multiforecast(wfs_refit, .h = "12 month")
+wfs_forecast <- modeltime_wfs_multiforecast(wfs_refit, 
+                                            .h = "12 month")
 ```
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, fig.width=10, fig.height=6}
 wfs_forecast %>% 
   select(state, nested_forecast) %>% 
   unnest(nested_forecast) %>% 
   group_by(state) %>% 
   plot_modeltime_forecast(
-    .legend_max_width = 12,
-    .facet_ncol = 1, 
+    .facet_ncol = 2, 
     .line_size = 0.5,
+    .legend_max_width = 50,
     .interactive = FALSE,
     .facet_scales = 'free_y',
     .title='Proyecciones')+
-  theme(legend.position='right')
+  theme(legend.position='bottom')
 ```
 
 ---
@@ -429,6 +442,7 @@ wfs_forecast %>%
 ```{r, out.width='30%', echo=FALSE, fig.align='center'}
 knitr::include_graphics('https://media1.tenor.com/images/f6e068a5de7462f2dba479366e2b325d/tenor.gif?itemid=16536400')
 ```
+
 
 ## Contactos ✉
 
