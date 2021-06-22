@@ -237,6 +237,7 @@ receta <- recipe(value ~ date, data = training(splits)) %>%
           date_month)
 ```
 
+
 ```{r, echo=FALSE}
 receta %>% prep() %>% juice() %>% head(2) %>% kableExtra::kable()
 ```
@@ -248,21 +249,16 @@ receta %>% prep() %>% juice() %>% head(2) %>% kableExtra::kable()
 ```{r}
 # Modelo Auto-ARIMA
 m_autoarima <- arima_reg() %>% 
-  
   set_engine('auto_arima') %>%  
-  
   fit(value~date, data=training(splits))
 
 # Modelo exponential smoothing
 m_exp_smoothing <- exp_smoothing() %>% 
-  
   set_engine('ets') %>% 
-  
   fit(value~date, data=training(splits))
 
 # Modelo prophet boosted
 m_prophet_boost <- workflow() %>% 
-  
   add_recipe(receta) %>% 
   
   add_model(prophet_boost(mode='regression') %>%
@@ -546,6 +542,49 @@ wfs_forecast %>%
     .title='Proyecciones')+
   theme(legend.position='bottom')
 ```
+---
+# Automagic Tabs
+
+
+---
+## Qué es una tab?
+
+
+---
+
+
+
+---
+## Generación de tabs de forma manual
+
+
+
+---
+## GIF
+
+
+---
+## Generación automatica de tabs
+
+* Datos
+
+* Dataframe anidado
+
+---
+## Generación de gráficos (imprimimos el dataframe andiado)
+
+
+
+---
+## Se muestra un grafico
+
+```{r ,eval=FALSE}
+nest_data %>% pluck("ts_plots",1)
+```
+
+---
+## Inline ejemplo
+
 
 ---
 
