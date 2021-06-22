@@ -187,66 +187,179 @@ nest_plots$ts_plots[[4]]
 ]
 ]
 ---
-# Una serie y un modelo
+# Múltiples modelos y una serie
 
-Se selecciona el estado de Hawaii
+
+---
+## Flujo de trabajo de modeltime
+
+### Preparación de datos
+
+* Se selecciona el estado de Hawaii
 
 ```{r, fig.height=3, fig.width=10}
 data_hawaii <- data %>% 
   filter(state=='Hawaii')
 ```
 
-Se particiona el dataset en train y test
+--
+* Particiona el dataset en train y test
+
 ```{r, fig.height=3, fig.width=10}
 splits <- data_hawaii %>%  
   initial_time_split(prop = 0.8)
 ```
---
+
+---
+**Visualización de la partición**
+
 ```{r, fig.height=3, fig.width=10}
-splits %>% tk_time_series_cv_plan() %>%
+splits %>% 
+  tk_time_series_cv_plan() %>%
   plot_time_series_cv_plan(date, value) 
 ```
 
 ---
 **Receta**: Se crea una receta de preprocesamiento, incluye la fórmula a estimar y un paso adicional que añade variables en función de la fecha
 ```{r}
-receta <- recipe(value ~ ., data = training(splits) %>% select(-state)) %>%
-    step_date(date, features = c("month", "quarter", "year"))
+receta <- recipe(value ~ date, data = training(splits)) %>%
+  
+  step_timeseries_signature(date) %>% 
+  
+  step_rm(contains("iso"), 
+          contains("minute"), 
+          contains("hour"),
+          contains("am.pm"), 
+          contains("xts"), 
+          contains("second"),
+          date_index.num, 
+          date_wday, 
+          date_month)
 ```
 
 ```{r, echo=FALSE}
 receta %>% prep() %>% juice() %>% head(2) %>% kableExtra::kable()
 ```
 --
-**Modelo**: Se especifica el modelo a ajustar
+
+---
+**Modelos**: Definición y ajuste de modelos sobre train
+
 ```{r}
-autoarima_boost_reg = arima_boost() %>% 
-  set_engine('auto_arima_xgboost') 
-```
---
-**Ajujste**: Se genera un workflow añadiendo la receta y luego el modelo. Finalmente, se entrena con los datos de entrenamiento
-```{r}
-wf <- workflow() %>% 
+# Modelo Auto-ARIMA
+m_autoarima <- arima_reg() %>% 
+  
+  set_engine('auto_arima') %>%  
+  
+  fit(value~date, data=training(splits))
+
+# Modelo exponential smoothing
+m_exp_smoothing <- exp_smoothing() %>% 
+  
+  set_engine('ets') %>% 
+  
+  fit(value~date, data=training(splits))
+
+# Modelo prophet boosted
+m_prophet_boost <- workflow() %>% 
+  
   add_recipe(receta) %>% 
-  add_model(autoarima_boost_reg) %>% 
-  fit(training(splits))
+  
+  add_model(prophet_boost(mode='regression') %>%
+              set_engine("prophet_xgboost")) %>% 
+  
+  fit(data = training(splits))
 ```
 
 ---
-**Modelo ajustado**
-```{r, , tidy=TRUE, echo=FALSE}
-wf$fit$fit$fit
+**Modeltimetable**
+
+```{r}
+modelos <- modeltime_table(m_autoarima,
+                           m_exp_smoothing,
+                           m_prophet_boost
+                           )
+```
+
+--
+
+```{r}
+modelos
 ```
 
 ---
-## Predicción sobre test
+**Calibración de modelos**: S everifica el rendimiento de los modelos sobre la partición de test.
+
+```{r}
+calibration_table <- modelos %>% modeltime_calibrate(new_data = testing(splits))
+```
+
+--
+* Verificación de metrias
+```{r}
+calibration_table %>% modeltime_accuracy()
+```
 
 ---
-## Proyección a futuro
+* Verificación visual
+
+```{r}
+forecast_series <- calibration_table %>% 
+  modeltime_forecast(
+    new_data    = testing(splits),
+    actual_data = data_hawaii
+  )
+```
+
+--
+
+```{r}
+forecast_series %>% 
+  plot_modeltime_forecast(
+    .legend_max_width = 30, 
+    .interactive      = FALSE,
+    .conf_interval_alpha = 0.2, 
+    .line_size=0.3
+  )
+```
 
 ---
-# Dataframes anidados
+**Selección y reajuste de modelos sobre todo el conjunto de datos**
 
+```{r}
+refit_tbl <- calibration_table %>%
+  filter(.model_id %in% c(2,3)) %>% 
+  modeltime_refit(data = data_hawaii)
+```
+
+--
+
+```{r}
+forecast_final <- refit_tbl %>% 
+  modeltime_forecast(
+    actual_data = data_hawaii,
+    h='2 years'
+  )
+```
+
+--
+
+```{r}
+forecast_final %>% 
+  plot_modeltime_forecast(
+    .legend_max_width = 30, 
+    .interactive      = FALSE,
+    .conf_interval_alpha = 0.2, 
+    .line_size=0.3
+)
+```
+
+---
+# Múltiples modelos sobre múltiples series (no panel)
+
+
+---
+## Datos
 ```{r}
 nest_data <- data %>% nest(nested_column = -state)
 ```
@@ -258,9 +371,6 @@ reactable::reactable(nest_data, details = function(index) {
   htmltools::div(style = "padding: 10px", reactable::reactable(data, outlined = TRUE))
 }, defaultPageSize=4) 
 ```
-
----
-# Múltiples modelos para múltiples series
 
 ---
 # Workflowsets en múltiples series
