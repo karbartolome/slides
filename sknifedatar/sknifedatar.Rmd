@@ -6,6 +6,9 @@ date: '2021-06-24'
 output: 
   xaringan::moon_reader:
     css: "xaringan-themer.css"
+    nature:
+      navigation: 
+        scroll: false
 ---
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(warning = FALSE, 
@@ -45,6 +48,35 @@ style_mono_accent(
 xaringanExtra::use_progress_bar(color = "#0051BA", location = "top")
 ```
 
+# Quiénes somos
+.pull-left[
+### Rafael Zambrano
+🔮 **Data Scientist**
+- Actuario
+- Acá alguna descripción más extensa
+]
+.pull-right[
+<br>
+<br>
+```{r, out.width='35%', fig.align='center', echo=FALSE}
+knitr::include_graphics('images/imagen_b.jpeg')
+```
+]
+
+.pull-left[
+### Karina Bartolomé 
+🔮 **Data Scientist**
+- Economista
+- Acá alguna descripción más extensa
+]
+.pull-right[
+<br>
+<br>
+```{r, out.width='35%', fig.align='center', echo=FALSE}
+knitr::include_graphics('images/imagen_a.jpeg')
+```
+]
+---
 # ¿Qué es #modeltime?
 
 Es un ecosistema desarrollado por Matt Dancho para realizar análisis de series de tiempo mediante un enfoque ordenado (o Tidy) con #tidymodels. 
@@ -237,32 +269,34 @@ receta <- recipe(value ~ date, data = training(splits)) %>%
           date_month)
 ```
 
-
 ```{r, echo=FALSE}
-receta %>% prep() %>% juice() %>% head(2) %>% kableExtra::kable()
+receta %>% prep() %>% juice() %>% head(2) %>% gt()
+  
 ```
---
 
 ---
 **Modelos**: Definición y ajuste de modelos sobre train
 
-```{r}
-# Modelo Auto-ARIMA
+```{r, eval=FALSE}
+# Modelo: Auto-ARIMA
 m_autoarima <- arima_reg() %>% 
   set_engine('auto_arima') %>%  
   fit(value~date, data=training(splits))
 
-# Modelo exponential smoothing
+# Modelo: exponential smoothing
 m_exp_smoothing <- exp_smoothing() %>% 
   set_engine('ets') %>% 
   fit(value~date, data=training(splits))
 
-# Modelo prophet boosted
+# Workflow: prophet boosted
 m_prophet_boost <- workflow() %>% 
+  
   add_recipe(receta) %>% 
   
-  add_model(prophet_boost(mode='regression') %>%
-              set_engine("prophet_xgboost")) %>% 
+  add_model(
+    prophet_boost(mode='regression') %>%
+    set_engine("prophet_xgboost")
+  ) %>% 
   
   fit(data = training(splits))
 ```
@@ -270,34 +304,45 @@ m_prophet_boost <- workflow() %>%
 ---
 **Modeltimetable**
 
-```{r}
+```{r, eval=FALSE}
 modelos <- modeltime_table(m_autoarima,
                            m_exp_smoothing,
                            m_prophet_boost
                            )
 ```
 
---
+```{r, echo=FALSE}
+#saveRDS(modelos, 'modelos/modelos_hawaii.rds')
+modelos <- readRDS('modelos/modelos_hawaii.rds')
+```
 
-```{r}
-modelos
+--
+```{r, echo=FALSE}
+modelos %>% rmarkdown::paged_table(list(rows.print = 6))
 ```
 
 ---
 **Calibración de modelos**: S everifica el rendimiento de los modelos sobre la partición de test.
 
 ```{r}
-calibration_table <- modelos %>% modeltime_calibrate(new_data = testing(splits))
+calibration_table  <- modelos %>% modeltime_calibrate(new_data = testing(splits))
 ```
 
 --
 * Verificación de metrias
-```{r}
+```{r, eval=FALSE}
 calibration_table %>% modeltime_accuracy()
 ```
 
+```{r, echo=FALSE}
+calibration_table %>% modeltime_accuracy() %>% 
+  select(-.type) %>% 
+  rmarkdown::paged_table(list(rows.print = 6))
+```
+
 ---
-* Verificación visual
+
+* Forecasting
 
 ```{r}
 forecast_series <- calibration_table %>% 
@@ -307,28 +352,33 @@ forecast_series <- calibration_table %>%
   )
 ```
 
---
+---
 
-```{r}
+* Verificación visual
+
+```{r, fig.height=6, fig.width=10}
 forecast_series %>% 
   plot_modeltime_forecast(
-    .legend_max_width = 30, 
-    .interactive      = FALSE,
-    .conf_interval_alpha = 0.2, 
-    .line_size=0.3
+    .legend_max_width     = 30, 
+    .interactive          = FALSE,
+    .conf_interval_alpha  = 0.2
   )
 ```
 
 ---
 **Selección y reajuste de modelos sobre todo el conjunto de datos**
 
+Se seleccionan 2 modelos y luego se reajustan ambos modelos en todos los datos (train + test)
+
 ```{r}
 refit_tbl <- calibration_table %>%
-  filter(.model_id %in% c(2,3)) %>% 
+  filter(.model_id %in% c(1,2)) %>% 
   modeltime_refit(data = data_hawaii)
 ```
 
 --
+
+Proyección
 
 ```{r}
 forecast_final <- refit_tbl %>% 
@@ -338,21 +388,25 @@ forecast_final <- refit_tbl %>%
   )
 ```
 
---
+---
 
-```{r}
+**Visualización de la proyección a 2 años**
+
+```{r, fig.height=6, fig.width=10}
 forecast_final %>% 
   plot_modeltime_forecast(
     .legend_max_width = 30, 
     .interactive      = FALSE,
-    .conf_interval_alpha = 0.2, 
-    .line_size=0.3
+    .conf_interval_alpha = 0.2
 )
 ```
 
 ---
 # Múltiples modelos sobre múltiples series (no panel)
 
+```{r, fig.align='center'}
+knitr::include_graphics('diagrama_multifit.png')
+```
 
 ---
 ## Datos
@@ -370,6 +424,13 @@ reactable::reactable(nest_data, details = function(index) {
 
 ---
 # Workflowsets en múltiples series
+
+```{r, fig.align='center'}
+knitr::include_graphics('diagrama_wfs.png')
+```
+
+
+---
 
 ### Recetas
 ```{r}
@@ -511,7 +572,7 @@ wfs_bests<- modeltime_wfs_multibestmodel(
 
 ### Reentrenamiento para todos los datos
 
-```{r, , message=FALSE, warning=FALSE, comment=FALSE}
+```{r, eval=FALSE, message=FALSE, warning=FALSE, comment=FALSE}
 wfs_refit <- modeltime_wfs_multirefit(wfs_bests)
 ```
 
