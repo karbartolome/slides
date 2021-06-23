@@ -604,47 +604,49 @@ wfs_forecast %>%
   theme(legend.position='bottom')
 ```
 ---
+
+ <br> 
+ <br>
 # Automagic Tabs
 
-
----
-## Qué es una tab?
-
-
----
-
+```{r, fig.align='center', echo=FALSE}
+knitr::include_graphics('https://media.tenor.com/images/23bfa35425bcd3794bea802adb5b9bfc/tenor.gif')
+```
 
 
 ---
-## Generación de tabs de forma manual
+# ¿Por qué utilizar tabs? 🤔
 
-
-
----
-## GIF
+Mostrar muchos gráficos  📈 o resultados de modelos 🤖 juntos puede generar confusión. Organizar los resultados en solapas permite centrar la atención en ciertos aspectos y no sobrecargar de información. 
 
 
 ---
-## Generación automatica de tabs
+## ¿Cómo se crean tabs manualmente?
 
-* Datos
-
-* Dataframe anidado
-
----
-## Generación de gráficos (imprimimos el dataframe andiado)
-
-
-
----
-## Se muestra un grafico
-
-```{r ,eval=FALSE}
-nest_data %>% pluck("ts_plots",1)
+```{r, out.width='70%', echo=FALSE, fig.align='center'}
+knitr::include_graphics('https://karbartolome-blog.netlify.app/posts/automagictabs/data/tabs.png')
 ```
 
 ---
-## Inline ejemplo
+<br>
+<br>
+<br>
+
+```{r, out.width='50%', echo=FALSE, fig.align='center'}
+knitr::include_graphics('https://media1.tenor.com/images/6f5f6fdc8187c12a0dc085135d708115/tenor.gif?itemid=3571132')
+```
+
+---
+## Generación automática de tabs 🙌
+
+👉 **Código inline** , utilizando un dataframe anidado, que incluye una variable del resultado a presentar por tab ('ts_plots'), y una variable agrupadora ('state')
+
+```{r, eval=FALSE}
+`r automagic_tabs(input_data = nest_plots_1, 
+                  panel_name = "state", 
+                  .output = "ts_plots")`
+```
+
 
 
 ---

@@ -1,0 +1,79 @@
+---
+title: "Automagic tabs"
+author: "Karina Bartolomé"
+date: "6/22/2021"
+output:
+  distill::distill_article:
+    self_contained: false
+    toc: true
+    toc_depth: 5
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, 
+                      warning=FALSE, 
+                      message=FALSE)
+```
+
+## Librerías
+```{r}
+library(tidyverse)
+library(sknifedatar)
+library(timetk)
+```
+
+```{r}
+xaringanExtra::use_panelset()
+```
+
+## Datos de consumo de gas
+**Consumo residencial de gas 4 estados de Estados Unidos, entre 1989 y 2020** 
+
+```{r}
+data <-  USgas::us_residential %>% 
+  rename(value=y) %>%  
+  filter(state %in%  c('Nevada','Maine', 'Hawaii','West Virginia'))
+```
+
+## Dataframe anidado
+
+```{r}
+nest_data <- data %>% 
+  nest(nested_column = -state)
+```
+
+## Evolución de las series
+
+```{r}
+nest_plots_1 <- 
+  nest_data %>%
+  mutate(ts_plots = map(nested_column, 
+                        ~ plot_time_series(.data = .x,
+                                           .date_var = date,
+                                           .value = value,
+                                           .interactive = TRUE
+                                          )))
+```
+
+`r automagic_tabs(input_data = nest_plots_1, panel_name = "state", .output = "ts_plots", .layout = "l-page", fig.heigth=1, fig.width=10)`
+
+## Descomposición de las series
+
+```{r}
+nest_plots_2 <- nest_data %>%
+  mutate(ts_plots = map(nested_column, 
+          ~  plot_stl_diagnostics(.x, 
+              .date_var=date, 
+              .value=value, 
+              .frequency = 'auto',
+              .trend = 'auto', 
+              .interactive=FALSE,
+              .feature_set = c("observed", "season", "trend", "remainder"))
+          ))
+```
+
+`r automagic_tabs(input_data = nest_plots_2, panel_name = "state", .output = "ts_plots", .layout = "l-page", fig.heigth=1, fig.width=10)`
+
+
+
+
