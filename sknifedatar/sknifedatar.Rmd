@@ -404,7 +404,7 @@ forecast_final %>%
 ---
 # Múltiples modelos sobre múltiples series (no panel)
 
-```{r, fig.align='center'}
+```{r, fig.align='center', echo=FALSE}
 knitr::include_graphics('diagrama_multifit.png')
 ```
 
@@ -425,7 +425,7 @@ reactable::reactable(nest_data, details = function(index) {
 ---
 # Workflowsets en múltiples series
 
-```{r, fig.align='center'}
+```{r, fig.align='center', echo=FALSE}
 knitr::include_graphics('diagrama_wfs.png')
 ```
 
