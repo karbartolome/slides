@@ -11,12 +11,23 @@ output:
         scroll: false
 ---
 class: center
+
+```{r, out.width='40%', echo=FALSE}
+knitr::include_graphics('https://media1.tenor.com/images/44863027a0e0b6138d9b3bb902ff1b9c/tenor.gif?itemid=20891446')
+```
 # Sknifedatar
 
-Ajuste y visualización de múltiples modelos sobre múltiples series de tiempo. Se presentarán varios casos de uso mostrando como modelar series de tiempo con tidymodels y modeltime a través de la extensión sknifedatar.
+**Ajuste y visualización de múltiples modelos**
 
-**Rafael Zambrano & Karina Bartolomé**
-**2021-06-24**
+**sobre múltiples series de tiempo**
+
+<br>
+<br>
+<br>
+2021-06-24
+
+Rafael Zambrano & Karina Bartolomé
+<br>
 
 ---
 ```{r setup, include=FALSE}
@@ -62,7 +73,7 @@ xaringanExtra::use_progress_bar(color = "#0051BA", location = "top")
 ### Rafael Zambrano
 🚀 **Data Scientist**
 - Actuario 🇻🇪
-- Especialista en métodos cuantitativos (magister en curso)
+- Magister en métodos cuantitativos (en curso)
 ]
 .pull-right[
 <br>
@@ -98,8 +109,7 @@ knitr::include_graphics('images/modeltime.png')
 
 # Sknifedatar 📦
 
-#### Una extensión de #modeltime
-
+#### Una extensión de **#modeltime**
 ```{r, eval=FALSE}
 install.packages('sknifedatar')
 ```
