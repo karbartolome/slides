@@ -376,6 +376,8 @@ calibration_table %>% modeltime_accuracy() %>%
   select(-.type) %>% 
   rmarkdown::paged_table(list(rows.print = 6))
 ```
+
+---
 * Forecasting 🔬
 
 Se realiza la **proyección** sobre los datos de testing para luego visualizarla. 
