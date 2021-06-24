@@ -71,8 +71,8 @@ xaringanExtra::use_progress_bar(color = "#0051BA", location = "top")
 # ¿Quiénes somos?
 .pull-left[
 ### Rafael Zambrano
-🚀 **Data Scientist**
 - Actuario 🇻🇪
+- Data Scientist en Ualá 🚀
 - Magister en métodos cuantitativos (en curso)
 ]
 .pull-right[
@@ -84,9 +84,9 @@ knitr::include_graphics('images/imagen_b.jpeg')
 ]
 
 .pull-left[
-### Karina Bartolomé 
-🚀 **Data Scientist**
+### Karina Bartolomé
 - Economista 🇦🇷
+- Data Scientist en Ualá 🚀
 - Especialista en métodos cuantitativos (en curso)
 ]
 .pull-right[
@@ -120,7 +120,7 @@ Incluye:
 - **Funciones multifit**: Múltiples modelos en múltiples series de tiempo (sin datos de panel)
 - **Workflowsets**: Ajuste de múltiples modelos y recetas de preprocesamiento con modeltime
 - **Workflowset multifit**: Ajuste de múltiples modelos y recetas de preprocesamiento sobre múltiples modelos (sin datos de panel)
-- **Automagic tabs**: Función para generar automáticamente tabs en artículos Distill o Rmd
+- **Automagic tabs**: Generación automática de tabs
 ---
 # Agenda para hoy
 

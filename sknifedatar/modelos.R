@@ -1,24 +1,48 @@
-data <- sknifedatar::emae_series %>% 
-  filter(sector %in%  c('Transporte y comunicaciones',
-                        'Inmobiliarias',
-                        'Agro/Ganaderia/Caza/Silvicultura',
-                        'Servicios sociales/Salud'))
+library(sknifedatar)
+library(modeltime)
+library(workflowsets)
+library(tidymodels)
+library(tidyverse)
+library(timetk)
+library(anomalize) 
 
-nest_data <- data %>% nest(nested_column = -sector)
+data <-  USgas::us_residential %>% 
+  rename(value=y) %>%  
+  filter(state %in%  c('Nevada','Maine',
+                       'Hawaii','West Virginia'))
+
+nest_data <- data %>% nest(nested_column = -state)
 
 
 # 1 modelo 1 serie --------------------------------------------------------
-data_transporte <- data %>% 
-  filter(sector=='Inmobiliarias')
+data_hawaii <- data %>% 
+  filter(state=='Hawaii')
 
-splits <- data_transporte %>%  
-  filter(date<'2020-01-02') %>%  
-  initial_time_split(prop = 0.8)
+splits <- data_hawaii %>%  
+  initial_time_split(prop = 0.9)
 
 
 receta <- recipe(value ~ ., 
-                 data = training(splits) %>% select(-sector)) %>%
-  step_date(date, features = c("month", "quarter", "year"))
+                 data = training(splits) %>% select(-state)) %>%
+  step_date(date, features = c("month", "quarter", "year")) 
+
+receta_num <- recipe(value ~ date, training(splits)) %>%
+  step_timeseries_signature(date) %>%
+  step_rm(contains("am.pm"), contains("hour"), contains("minute"),
+          contains("second"), contains("xts")) %>%
+  step_dummy(all_nominal())
+
+
+# Modelo elastic net
+
+linear_reg_lm_spec <- linear_reg() %>%
+  set_engine('lm')
+
+
+wf_lineal <- workflow() %>% 
+  add_recipe(receta_num) %>% 
+  add_model(linear_reg_lm_spec) %>% 
+  fit(training(splits))
 
 # Modelo Auto-ARIMA
 autoarima_boost_reg <- workflow() %>% 
