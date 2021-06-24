@@ -46,6 +46,10 @@ nest_data <- data %>%
 nest_data
 ```
 
+```{r}
+nest_data$nested_column[[1]]
+```
+
 ## Evolución de las series 📈
 
 ```{r}
@@ -57,6 +61,8 @@ nest_plots_1 <-
                                            .value = value,
                                            .interactive = TRUE
                                           )))
+
+nest_plots_1
 ```
 
 `r automagic_tabs(input_data = nest_plots_1, panel_name = "state", .output = "ts_plots", fig.heigth=1, fig.width=10, echo=FALSE)`
@@ -74,6 +80,8 @@ nest_plots_2 <- nest_data %>%
               .interactive=FALSE,
               .feature_set = c("observed", "season", "trend", "remainder"))
           ))
+
+nest_plots_2
 ```
 
 `r automagic_tabs(input_data = nest_plots_2, panel_name = "state", .output = "ts_plots", echo=FALSE, fig.height=5 , .layout="l-body-outset")`

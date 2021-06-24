@@ -33,7 +33,7 @@ receta_num <- recipe(value ~ date, training(splits)) %>%
   step_dummy(all_nominal())
 
 
-# Modelo elastic net
+# Modelo reg lineal
 
 linear_reg_lm_spec <- linear_reg() %>%
   set_engine('lm')
@@ -72,6 +72,7 @@ nnetar <- workflow() %>%
 
 # Model table
 modelos <- modeltime_table(
+  wf_lineal,
   autoarima_boost_reg,
   exp_smoothing,
   prophet_boost,
@@ -147,7 +148,7 @@ forecast_transporte <- calibration_table %>%
   filter(.model_id %in% c(1,3)) %>%
   modeltime_forecast(
     new_data    = testing(splits),
-    actual_data = data_transporte %>% filter(date<'2020-01-02') 
+    actual_data = data_hawaii 
   )
 
 forecast_transporte %>% 

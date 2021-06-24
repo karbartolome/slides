@@ -575,7 +575,7 @@ model_table$models_accuracy %>%
 ```{r}
 forecast_series <- modeltime_multiforecast(
   model_table$table_time,
-  .prop = 0.8
+  .prop = 0.9
 )
 ```
 ---
