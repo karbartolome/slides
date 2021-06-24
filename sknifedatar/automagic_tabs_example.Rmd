@@ -1,7 +1,7 @@
 ---
-title: "Automagic tabs"
-author: "Karina Bartolomé"
-date: "6/22/2021"
+title: "Automagic tabs 🧙️"
+author: "Grupo de R Madrid"
+date: "6/24/2021"
 output:
   distill::distill_article:
     self_contained: false
@@ -15,19 +15,21 @@ knitr::opts_chunk$set(echo = TRUE,
                       message=FALSE)
 ```
 
-## Librerías
+## Librerías 📚
+
 ```{r}
 library(tidyverse)
 library(sknifedatar)
 library(timetk)
 ```
 
-```{r}
+```{r, echo=FALSE}
 xaringanExtra::use_panelset()
 ```
 
-## Datos de consumo de gas
-**Consumo residencial de gas 4 estados de Estados Unidos, entre 1989 y 2020** 
+## Datos de consumo de gas 📊
+
+**Consumo residencial de gas 4 estados de Estados Unidos, entre 1989 y 2020**
 
 ```{r}
 data <-  USgas::us_residential %>% 
@@ -35,14 +37,16 @@ data <-  USgas::us_residential %>%
   filter(state %in%  c('Nevada','Maine', 'Hawaii','West Virginia'))
 ```
 
-## Dataframe anidado
+## Dataframe anidado ⚙️
 
 ```{r}
 nest_data <- data %>% 
   nest(nested_column = -state)
+
+nest_data
 ```
 
-## Evolución de las series
+## Evolución de las series 📈
 
 ```{r}
 nest_plots_1 <- 
@@ -55,9 +59,9 @@ nest_plots_1 <-
                                           )))
 ```
 
-`r automagic_tabs(input_data = nest_plots_1, panel_name = "state", .output = "ts_plots", .layout = "l-page", fig.heigth=1, fig.width=10)`
+`r automagic_tabs(input_data = nest_plots_1, panel_name = "state", .output = "ts_plots", fig.heigth=1, fig.width=10, echo=FALSE)`
 
-## Descomposición de las series
+## Descomposición de las series ✂️
 
 ```{r}
 nest_plots_2 <- nest_data %>%
@@ -72,8 +76,4 @@ nest_plots_2 <- nest_data %>%
           ))
 ```
 
-`r automagic_tabs(input_data = nest_plots_2, panel_name = "state", .output = "ts_plots", .layout = "l-page", fig.heigth=1, fig.width=10)`
-
-
-
-
+`r automagic_tabs(input_data = nest_plots_2, panel_name = "state", .output = "ts_plots", echo=FALSE, fig.height=5 , .layout="l-body-outset")`

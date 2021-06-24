@@ -1,14 +1,23 @@
 ---
 title: "Sknifedatar"
-subtitle: "A modeltime extension"
 author: "Rafael Zambrano & Karina Bartolomé"
 date: '2021-06-24'
 output: 
   xaringan::moon_reader:
+    seal: false
     css: "xaringan-themer.css"
     nature:
       navigation: 
         scroll: false
+---
+class: center
+# Sknifedatar
+
+Ajuste y visualización de múltiples modelos sobre múltiples series de tiempo. Se presentarán varios casos de uso mostrando como modelar series de tiempo con tidymodels y modeltime a través de la extensión sknifedatar.
+
+**Rafael Zambrano & Karina Bartolomé**
+**2021-06-24**
+
 ---
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(warning = FALSE, 
@@ -48,12 +57,12 @@ style_mono_accent(
 xaringanExtra::use_progress_bar(color = "#0051BA", location = "top")
 ```
 
-# Quiénes somos
+# ¿Quiénes somos?
 .pull-left[
 ### Rafael Zambrano
-🔮 **Data Scientist**
-- Actuario
-- Acá alguna descripción más extensa
+🚀 **Data Scientist**
+- Actuario 🇻🇪
+- Especialista en métodos cuantitativos (magister en curso)
 ]
 .pull-right[
 <br>
@@ -65,9 +74,9 @@ knitr::include_graphics('images/imagen_b.jpeg')
 
 .pull-left[
 ### Karina Bartolomé 
-🔮 **Data Scientist**
-- Economista
-- Acá alguna descripción más extensa
+🚀 **Data Scientist**
+- Economista 🇦🇷
+- Especialista en métodos cuantitativos (en curso)
 ]
 .pull-right[
 <br>
@@ -79,7 +88,7 @@ knitr::include_graphics('images/imagen_a.jpeg')
 ---
 # ¿Qué es #modeltime?
 
-Es un ecosistema desarrollado por Matt Dancho para realizar análisis de series de tiempo mediante un enfoque ordenado (o Tidy) con #tidymodels. 
+Es un ecosistema desarrollado por **Matt Dancho** para realizar análisis de series de tiempo mediante un enfoque ordenado (o Tidy) con #tidymodels 📦. 
 
 ```{r, echo=FALSE, out.height='90%',out.width='90%',  fig.align='center'}
 knitr::include_graphics('images/modeltime.png')
@@ -87,9 +96,9 @@ knitr::include_graphics('images/modeltime.png')
 
 ---
 
-# Sknifedatar
+# Sknifedatar 📦
 
-#### Una extensión de modeltime
+#### Una extensión de #modeltime
 
 ```{r, eval=FALSE}
 install.packages('sknifedatar')
@@ -100,11 +109,9 @@ knitr::include_graphics('images/sknifedatar.png')
 ```
 Incluye: 
 - **Funciones multifit**: Múltiples modelos en múltiples series de tiempo (sin datos de panel)
-- **Workflowsets**: Worklowsets con modeltime
-- **Workflowset multifit**: Worklowset en múltiples series (sin datos de panel)
-- **Automagic tabs**: Función para generar automáticamente tabs en artículos distill o rmd
-- **Ventanas móviles**: Partición de datos en ventanas móviles
-
+- **Workflowsets**: Ajuste de múltiples modelos y recetas de preprocesamiento con modeltime
+- **Workflowset multifit**: Ajuste de múltiples modelos y recetas de preprocesamiento sobre múltiples modelos (sin datos de panel)
+- **Automagic tabs**: Función para generar automáticamente tabs en artículos Distill o Rmd
 ---
 # Agenda para hoy
 
@@ -118,23 +125,26 @@ knitr::include_graphics('https://media1.tenor.com/images/5998dc6b4576b29ba1d61a0
 
 - **Workflowsets**: Ajuste de múltiples modelos y recetas de preprocesamiento sobre múltiples modelos
 
-- **Extensión**: tabs en Distill / Rmd
+- **Automagic tabs**: Generación automática de tabs en Distill / Rmd
 
 ---
 
-# Librerías utilizadas
+# Librerías utilizadas 📚
 
 ```{r, message=FALSE}
 library(sknifedatar)
 library(modeltime)
 library(workflowsets)
-library(rsample)
 library(tidymodels)
 library(tidyverse)
 library(timetk)
 library(anomalize) 
+```
+
+```{r, echo=FALSE}
 library(gt)
 ```
+
 
 ```{r, echo=FALSE, out.width='50%', fig.align='center'}
 knitr::include_graphics('https://media1.tenor.com/images/591f5618423822e347cf9c9899bdf697/tenor.gif?itemid=9448505')
@@ -146,12 +156,13 @@ xaringanExtra::use_panelset()
 
 ---
 
-# Datos
+# Datos 📊
 **Consumo residencial de gas 4 estados de Estados Unidos, entre 1989 y 2020** 
 
 --
 ```{r}
-data <-  USgas::us_residential %>% rename(value=y) %>%  
+data <-  USgas::us_residential %>% 
+  rename(value=y) %>%  
   filter(state %in%  c('Nevada','Maine',
                        'Hawaii','West Virginia'))
 ```
@@ -162,20 +173,34 @@ data %>% head(5) %>% kableExtra::kable(format = "html")
 
 ---
 
-### Evolución y momentos anómalos
+### Evolución 📈
+
+```{r, fig.width=10, fig.height=5, message=FALSE, eval=FALSE}
+data %>% group_by(state) %>%
+  plot_time_series(date, value) 
+```
+
+```{r, fig.width=10, fig.height=6, message=FALSE, echo=FALSE}
+data %>% group_by(state) %>%
+  plot_time_series(date, value, .interactive=FALSE,
+    .facet_ncol = 2, .facet_scales = 'free_y') 
+```
+
+---
+### Detección de anomalías 🔍
 ```{r, fig.width=10, fig.height=5, message=FALSE, eval=FALSE}
 data %>% group_by(state) %>%
   plot_anomaly_diagnostics(date, value) 
 ```
 
-```{r, fig.width=10, fig.height=5, message=FALSE, echo=FALSE}
+```{r, fig.width=10, fig.height=6, message=FALSE, echo=FALSE}
 data %>% group_by(state) %>%
   plot_anomaly_diagnostics(date, value, .anom_size = 1, .interactive=FALSE,
     .facet_ncol = 2, .max_anomalies = 0.05, .facet_scales = 'free_y') 
 ```
 
 ---
-### Descomposición de series de tiempo
+### Descomposición de series de tiempo 
 
 .panelset[
 .panel[.panel-name[Hawaii]
@@ -219,15 +244,21 @@ nest_plots$ts_plots[[4]]
 ]
 ]
 ---
-# Múltiples modelos y una serie
+<br>
+<br>
+# Múltiples modelos y una serie 
+<br>
+```{r, out.width='25%', fig.align='center', echo=FALSE}
+knitr::include_graphics('https://media3.giphy.com/media/UotLuplZSzKRa/giphy.gif?cid=790b761126fdbc23cdef84ed3d243a31b042ccc0e3dc8b28&rid=giphy.gif&ct=g')
+```
 
 
 ---
-## Flujo de trabajo de modeltime
+## Flujo de trabajo de modeltime 
 
-### Preparación de datos
+### Preparación de datos ⚙️
 
-* Se selecciona el estado de Hawaii
+* Se selecciona el estado de 🏖 **Hawaii** 
 
 ```{r, fig.height=3, fig.width=10}
 data_hawaii <- data %>% 
@@ -235,7 +266,7 @@ data_hawaii <- data %>%
 ```
 
 --
-* Particiona el dataset en train y test
+* Particiona el dataset en train y test ✂️
 
 ```{r, fig.height=3, fig.width=10}
 splits <- data_hawaii %>%  
@@ -243,16 +274,17 @@ splits <- data_hawaii %>%
 ```
 
 ---
-### Visualización de la partición
+### Visualización de la partición 
 
-```{r, fig.height=3, fig.width=10}
+```{r, fig.height=6, fig.width=10}
 splits %>% 
   tk_time_series_cv_plan() %>%
   plot_time_series_cv_plan(date, value) 
 ```
 
 ---
-### Receta: Se crea una receta de preprocesamiento, incluye la fórmula a estimar y un paso adicional que añade variables en función de la fecha
+### Receta 🌮
+Se crea una receta de **preprocesamiento**, incluye la fórmula a estimar y un paso adicional que añade variables en función de la fecha.
 ```{r}
 receta <- recipe(value ~ date, data = training(splits)) %>%
   
@@ -274,7 +306,8 @@ receta %>% prep() %>% juice() %>% head(2) %>% gt()
 ```
 
 ---
-### Modelos: Definición y ajuste de modelos sobre train
+### Modelos 🚀
+Definición y ajuste de modelos sobre train
 
 ```{r, eval=FALSE}
 # Modelo: Auto-ARIMA
@@ -301,7 +334,9 @@ m_prophet_boost <- workflow() %>%
 ```
 
 ---
-### Modeltimetable
+### Modeltimetable 
+
+El objeto central del ecosistema #modeltime 📦 es el **modeltime_table**, el cual incluye todos los modelos entrenados para realizar comparaciones. 
 
 ```{r, eval=FALSE}
 modelos <- modeltime_table(m_autoarima,
@@ -321,16 +356,19 @@ modelos %>% rmarkdown::paged_table(list(rows.print = 6))
 ```
 
 ---
-### Calibración de modelos: Se everifica el rendimiento de los modelos sobre la partición de test.
+### Calibración de modelos 🔧
+Se verifica el **rendimiento** de los modelos sobre la partición de test.
 
 ```{r}
-calibration_table  <- modelos %>% modeltime_calibrate(new_data = testing(splits))
+calibration_table  <- modelos %>% 
+  modeltime_calibrate(new_data = testing(splits))
 ```
 
 --
-* Verificación de metrias
+* Verificación de métricas 🎯
 ```{r, eval=FALSE}
-calibration_table %>% modeltime_accuracy()
+calibration_table %>% 
+  modeltime_accuracy()
 ```
 
 ```{r, echo=FALSE}
@@ -338,21 +376,20 @@ calibration_table %>% modeltime_accuracy() %>%
   select(-.type) %>% 
   rmarkdown::paged_table(list(rows.print = 6))
 ```
+* Forecasting 🔬
 
----
-* Forecasting
+Se realiza la **proyección** sobre los datos de testing para luego visualizarla. 
 
 ```{r}
 forecast_series <- calibration_table %>% 
   modeltime_forecast(
     new_data    = testing(splits),
-    actual_data = data_hawaii
-  )
+    actual_data = data_hawaii)
 ```
 
 ---
 
-* Verificación visual
+### Verificación visual
 
 ```{r, fig.height=6, fig.width=10}
 forecast_series %>% 
@@ -364,7 +401,7 @@ forecast_series %>%
 ```
 
 ---
-**Selección y reajuste de modelos sobre todo el conjunto de datos**
+### Selección y reajuste de modelos
 
 Se seleccionan 2 modelos y luego se reajustan ambos modelos en todos los datos (train + test)
 
@@ -376,7 +413,7 @@ refit_tbl <- calibration_table %>%
 
 --
 
-**Proyección**
+## Proyección 🔮
 
 ```{r}
 forecast_final <- refit_tbl %>% 
@@ -388,8 +425,7 @@ forecast_final <- refit_tbl %>%
 
 ---
 
-**Visualización de la proyección a 2 años**
-
+### Visualización de la proyección a 2 años
 ```{r, fig.height=6, fig.width=10}
 forecast_final %>% 
   plot_modeltime_forecast(
@@ -407,7 +443,8 @@ knitr::include_graphics('diagrama_multifit.png')
 ```
 
 ---
-## Datos
+## Datos 📊
+
 ```{r}
 nest_data <- data %>% nest(nested_column = -state)
 ```
@@ -422,7 +459,7 @@ reactable::reactable(nest_data, details = function(index) {
 ```
 
 ---
-## Recetas
+## Receta 🌮 
 
 ```{r}
 receta <- recipe(value ~ date, data = data %>% select(-state)) %>%
@@ -441,7 +478,9 @@ receta <- recipe(value ~ date, data = data %>% select(-state)) %>%
 ```
 
 ---
-## Modelos
+## Modelos 🚀 
+
+Definición de modelos
 
 ```{r}
 # Modelo: tbats
@@ -464,13 +503,16 @@ m_prophet_boost <- workflow() %>%
 ```
 
 ---
-## Modeltime Multifit
+## Modeltime Multifit  ✨
+
+```{r, out.width='50%', fig.align='center', echo=FALSE}
+knitr::include_graphics('https://media1.tenor.com/images/de33de657684710f3b742a2e5e7f5020/tenor.gif?itemid=4409990')
+```
 
 ```{r ,echo=FALSE}
 #saveRDS(model_table, 'sknifedatar/modelos/model_table.rds')
 model_table <- readRDS('modelos/model_table.rds')
 ```
-
 
 ```{r ,eval=FALSE}
 model_table <- modeltime_multifit(serie = nest_data,
@@ -484,49 +526,40 @@ model_table <- modeltime_multifit(serie = nest_data,
 
 ---
 ## Modeltimetable 
-
 * **Table time**
-
 ```{r ,eval=FALSE}
 model_table$table_time
 ```
 
-
-```{r ,echo=FALSE}
+```{r, echo=FALSE, eval=TRUE}
 model_table$table_time %>% rmarkdown::paged_table(list(rows.print = 6))
 ```
-
 --
 
 ```{r ,eval=FALSE}
 model_table$table_time$nested_model[[1]]
 ```
 
-
-```{r,echo=FALSE}
+```{r,echo=FALSE, eval=TRUE}
 model_table$table_time$nested_model[[1]] %>%
   rmarkdown::paged_table(list(rows.print = 6))
 ```
-
 ---
-## Calibración de modelos: Se everifica el rendimiento de los modelos sobre la partición de test.
+## Calibración de modelos  🔧
+Se verifica el **rendimiento** de los modelos sobre la partición de test.
 
-* Verificación de metrias
+* Verificación de métricas 🎯
 ```{r,eval=FALSE}
-model_table$models_accuracy
+model_table$models_accuracy 
 ```
 
-```{r,echo=FALSE}
-model_table$models_accuracy %>%
+```{r,echo=FALSE, eval=TRUE}
+model_table$models_accuracy %>% 
   rmarkdown::paged_table(list(rows.print = 6))
 ```
 
 ---
-## Calibración de modelos
-
-### Se everifica el rendimiento de los modelos sobre la partición de test.
-
-* **Verificación visual**
+## Proyección sobre test 🔬
 
 ```{r}
 forecast_series <- modeltime_multiforecast(
@@ -534,11 +567,18 @@ forecast_series <- modeltime_multiforecast(
   .prop = 0.8
 )
 ```
-
 ---
 * **Verificación visual**
 
-```{r, fig.height=6, fig.width=10}
+```{r, fig.height=6, fig.width=10, eval=FALSE}
+forecast_series %>% 
+  select(state, nested_forecast) %>% 
+  unnest(nested_forecast) %>% 
+  group_by(state) %>% 
+  plot_modeltime_forecast() 
+```
+
+```{r, fig.height=6, fig.width=10, echo=FALSE}
 forecast_series %>% 
   select(state, nested_forecast) %>% 
   unnest(nested_forecast) %>% 
@@ -553,9 +593,9 @@ forecast_series %>%
 ```
 
 ---
-### Selección del mejor modelo para cada serie
+### Selección de modelos 🥇
 
-Se seleccionan el mejor modelo para cada serie en función a una métrica.
+Se selecciona el **mejor modelo** para cada serie en función a una métrica.
 
 ```{r}
 best_models <- modeltime_multibestmodel(
@@ -564,20 +604,34 @@ best_models <- modeltime_multibestmodel(
 )
 ```
 
---
+```{r, echo=FALSE, out.width='30%', fig.align='center'}
+knitr::include_graphics('https://media1.tenor.com/images/4ded3e63cdeb091e55a9e91b1ceb2340/tenor.gif?itemid=5002827')
+```
 
-```{r}
+---
+
+```{r, eval=FALSE}
+best_models %>% 
+  select(state, nested_forecast) %>% 
+  unnest(nested_forecast) %>% 
+  group_by(state) %>% 
+  plot_modeltime_forecast() 
+```
+
+```{r, echo=FALSE, fig.width=10, fig.height=6}
 best_models %>% 
   select(state, nested_forecast) %>% 
   unnest(nested_forecast) %>% 
   group_by(state) %>% 
   plot_modeltime_forecast(
     .interactive = FALSE,
-    .facet_scales = 'free_y') 
+    .facet_scales = 'free_y', 
+    .facet_ncol=2
+    ) 
 ```
 
 ---
-## Reajuste de los modelos
+## Reajuste de los modelos 🌀 
 
 * **Se reajustan los modelos para todas las series completas (train + test)**
 ```{r}
@@ -586,7 +640,7 @@ models_refit <- modeltime_multirefit(best_models)
 
 --
 
-**Proyección**
+**Proyección** 🔮
 
 * **Se predicen los proximos 2 años para todas las series.**
 
@@ -599,7 +653,15 @@ forecast_final <- models_refit %>%
 ---
 **Visualización de la proyección a 2 años**
 
-```{r, fig.height=6, fig.width=10}
+```{r, fig.height=6, fig.width=10, echo=TRUE, eval=FALSE}
+forecast_final %>% 
+  select(state, nested_forecast) %>% 
+  unnest(nested_forecast) %>% 
+  group_by(state) %>% 
+  plot_modeltime_forecast() 
+```
+
+```{r, fig.height=6, fig.width=10, echo=FALSE}
 forecast_final %>% 
   select(state, nested_forecast) %>% 
   unnest(nested_forecast) %>% 
@@ -616,7 +678,7 @@ forecast_final %>%
 
 ---
 
-# Workflowsets en múltiples series
+# Workflowsets en múltiples series 
 
 ```{r, fig.align='center', echo=FALSE}
 knitr::include_graphics('diagrama_wfs.png')
@@ -625,7 +687,7 @@ knitr::include_graphics('diagrama_wfs.png')
 
 ---
 
-### Recetas
+### Recetas 🌮
 ```{r}
 # Receta base
 recipe_base <- recipe(value~date, data=data_hawaii)
@@ -645,7 +707,7 @@ recipe_date_extrafeatures_fourier <-recipe_date_extrafeatures  %>%
 ```
 
 ---
-### Modelos
+### Modelos 🚀
 ```{r}
 # prophet_xgboost
 prophet_boost <- prophet_boost(mode = 'regression') %>% 
@@ -660,7 +722,7 @@ auto_arima_boost <- arima_boost() %>%
   set_engine('auto_arima_xgboost')
 ```
 ---
-### Workflowsets
+### Workflowsets ✨
 ```{r}
 wfsets <- workflow_set(
   preproc = list(
@@ -679,7 +741,7 @@ wfsets <- workflow_set(
 ```
 ---
 
-### Ajuste de modelos
+### Ajuste de modelos ⚙️ 
 ```{r, eval=FALSE}
 wfs_multifit <- modeltime_wfs_multifit(serie = nest_data,
                                        .prop = 0.8,
@@ -732,7 +794,7 @@ plots$plot[[4]]
 ]
 ]
 ---
-### Proyecciones
+### Proyecciones 🔬
 ```{r, message=FALSE, warning=FALSE}
 wfs_multiforecast <- modeltime_wfs_multiforecast(
   wfs_multifit$table_time, .prop=0.8)
@@ -754,7 +816,7 @@ wfs_multiforecast %>%
 ```
 
 ---
-### Selección del mejor modelo
+### Selección del mejor modelo 🥇
 ```{r}
 wfs_bests<- modeltime_wfs_multibestmodel(
   .table = wfs_multiforecast,
@@ -763,7 +825,7 @@ wfs_bests<- modeltime_wfs_multibestmodel(
 )
 ```
 
-### Reentrenamiento para todos los datos
+### Reentrenamiento para todos los datos 🌀
 
 ```{r, eval=FALSE, message=FALSE, warning=FALSE, comment=FALSE}
 wfs_refit <- modeltime_wfs_multirefit(wfs_bests)
@@ -775,7 +837,7 @@ wfs_refit <- readRDS('modelos/wfs_refit.rds')
 ```
 
 ---
-### Proyecciones a 12 meses
+### Proyecciones a 12 meses 🔮
 
 ```{r, message=FALSE, warning=FALSE, comment=FALSE}
 wfs_forecast <- modeltime_wfs_multiforecast(wfs_refit, 
@@ -800,9 +862,9 @@ wfs_forecast %>%
 
  <br> 
  <br>
-# Automagic Tabs
-
-```{r, fig.align='center', echo=FALSE}
+# Automagic Tabs 
+<br>
+```{r, out.width='50%', fig.align='center', echo=FALSE}
 knitr::include_graphics('https://media.tenor.com/images/23bfa35425bcd3794bea802adb5b9bfc/tenor.gif')
 ```
 
@@ -812,7 +874,32 @@ knitr::include_graphics('https://media.tenor.com/images/23bfa35425bcd3794bea802a
 
 Mostrar muchos gráficos  📈 o resultados de modelos 🤖 juntos puede generar confusión. Organizar los resultados en solapas permite centrar la atención en ciertos aspectos y no sobrecargar de información. 
 
+.panelset[
+.panel[.panel-name[👋 Hey!]
+Esta es la primera tab
 
+🌟 Hacer click en las tabs para consejos no solicitados 🌟 👆
+
+]
+
+.panel[.panel-name[Consejo 1]
+```{r, out.width="50%",echo=FALSE ,fig.align = 'center'}
+knitr::include_graphics('https://media.tenor.com/images/be8a87467b75e9deaa6cfe8ad0b739a0/tenor.gif')
+```
+]
+
+.panel[.panel-name[Consejo 2]
+```{r, out.width="50%",echo=FALSE ,fig.align = 'center'}
+knitr::include_graphics('https://media.tenor.com/images/6a2cca305dfacae61c5668dd1687ad55/tenor.gif')
+```
+]
+
+.panel[.panel-name[Consejo 3]
+```{r, out.width="50%",echo=FALSE ,fig.align = 'center'}
+knitr::include_graphics('https://media.tenor.com/images/bfde5ad652b71fc9ded82c6ed760355b/tenor.gif')
+```
+]
+]
 ---
 ## ¿Cómo se crean tabs manualmente?
 
