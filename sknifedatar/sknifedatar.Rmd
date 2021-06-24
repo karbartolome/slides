@@ -13,7 +13,7 @@ output:
 class: center
 
 ```{r, out.width='40%', echo=FALSE}
-knitr::include_graphics('https://media1.tenor.com/images/44863027a0e0b6138d9b3bb902ff1b9c/tenor.gif?itemid=20891446')
+knitr::include_graphics('images/gif_serie.gif')
 ```
 # Sknifedatar
 
@@ -126,7 +126,7 @@ Incluye:
 # Agenda para hoy
 
 ```{r, echo=FALSE, out.width='30%', fig.align='center'}
-knitr::include_graphics('https://media1.tenor.com/images/5998dc6b4576b29ba1d61a084f3d79d0/tenor.gif?itemid=5772115')
+knitr::include_graphics('images/gif_gato_lentes.gif')
 ```
 
 - **Introducción a modeltime**
@@ -157,7 +157,7 @@ library(gt)
 
 
 ```{r, echo=FALSE, out.width='50%', fig.align='center'}
-knitr::include_graphics('https://media1.tenor.com/images/591f5618423822e347cf9c9899bdf697/tenor.gif?itemid=9448505')
+knitr::include_graphics('images/gif_libros.gif')
 ```
 
 ```{r, echo=FALSE}
@@ -259,7 +259,7 @@ nest_plots$ts_plots[[4]]
 # Múltiples modelos y una serie 
 <br>
 ```{r, out.width='25%', fig.align='center', echo=FALSE}
-knitr::include_graphics('https://media3.giphy.com/media/UotLuplZSzKRa/giphy.gif?cid=790b761126fdbc23cdef84ed3d243a31b042ccc0e3dc8b28&rid=giphy.gif&ct=g')
+knitr::include_graphics('images/gif_gatos_multi.gif')
 ```
 
 
@@ -518,7 +518,7 @@ m_prophet_boost <- workflow() %>%
 ## Modeltime Multifit  ✨
 
 ```{r, out.width='50%', fig.align='center', echo=FALSE}
-knitr::include_graphics('https://media1.tenor.com/images/de33de657684710f3b742a2e5e7f5020/tenor.gif?itemid=4409990')
+knitr::include_graphics('images/gif_jack.gif')
 ```
 
 ```{r ,echo=FALSE}
@@ -617,7 +617,7 @@ best_models <- modeltime_multibestmodel(
 ```
 
 ```{r, echo=FALSE, out.width='30%', fig.align='center'}
-knitr::include_graphics('https://media1.tenor.com/images/4ded3e63cdeb091e55a9e91b1ceb2340/tenor.gif?itemid=5002827')
+knitr::include_graphics('images/gif_minon_1.gif')
 ```
 
 ---
@@ -877,7 +877,7 @@ wfs_forecast %>%
 # Automagic Tabs 
 <br>
 ```{r, out.width='50%', fig.align='center', echo=FALSE}
-knitr::include_graphics('https://media.tenor.com/images/23bfa35425bcd3794bea802adb5b9bfc/tenor.gif')
+knitr::include_graphics('images/gif_gato_tocadisco.gif')
 ```
 
 
@@ -925,7 +925,7 @@ knitr::include_graphics('https://karbartolome-blog.netlify.app/posts/automagicta
 <br>
 
 ```{r, out.width='50%', echo=FALSE, fig.align='center'}
-knitr::include_graphics('https://media1.tenor.com/images/6f5f6fdc8187c12a0dc085135d708115/tenor.gif?itemid=3571132')
+knitr::include_graphics('images/gif_minon_2.gif')
 ```
 
 ---
@@ -944,7 +944,7 @@ knitr::include_graphics('https://media1.tenor.com/images/6f5f6fdc8187c12a0dc0851
 ---
 
 ```{r, out.width='30%', echo=FALSE, fig.align='center'}
-knitr::include_graphics('https://media1.tenor.com/images/f6e068a5de7462f2dba479366e2b325d/tenor.gif?itemid=16536400')
+knitr::include_graphics('images/gif_bye.gif')
 ```
 
 
