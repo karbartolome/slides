@@ -9,7 +9,7 @@ output:
     nature:
       navigation: 
         scroll: false
-    self_contained: true
+    self_contained: false
 ---
 class: center
 
@@ -171,10 +171,12 @@ xaringanExtra::use_panelset()
 
 --
 ```{r}
-data <-  USgas::us_residential %>% 
-  rename(value=y) %>%  
+data <-  USgas::us_residential %>% rename(value=y) %>%  
   filter(state %in%  c('Nevada','Maine',
-                       'Hawaii','West Virginia'))
+                       'Hawaii','West Virginia')) %>% 
+  group_by(state) %>% 
+  mutate(value = ifelse(is.na(value),mean(value, na.rm=TRUE),value)) %>% 
+  ungroup()
 ```
 --
 ```{r, echo=FALSE}
@@ -521,20 +523,19 @@ m_prophet_boost <- workflow() %>%
 knitr::include_graphics('images/gif_jack.gif')
 ```
 
-```{r ,echo=FALSE}
-#saveRDS(model_table, 'sknifedatar/modelos/model_table.rds')
-model_table <- readRDS('modelos/model_table.rds')
-```
-
 ```{r ,eval=FALSE}
 model_table <- modeltime_multifit(serie = nest_data,
-                                  .prop = 0.9,
+                                  .prop = 0.8,
                                   m_tbats,
                                   m_seasonal,
                                   m_prophet_boost
                                   ) 
 ```
 
+```{r ,echo=FALSE}
+#saveRDS(model_table, 'modelos/model_table.rds')
+model_table <- readRDS('modelos/model_table.rds')
+```
 
 ---
 ## Modeltimetable 
@@ -719,7 +720,9 @@ recipe_date_extrafeatures_fourier <-recipe_date_extrafeatures  %>%
 ```
 
 ---
+
 ### Modelos 🚀
+
 ```{r}
 # prophet_xgboost
 prophet_boost <- prophet_boost(mode = 'regression') %>% 
@@ -732,9 +735,13 @@ nnetar <- nnetar_reg() %>%
 #auto_arima_xgboost
 auto_arima_boost <- arima_boost() %>% 
   set_engine('auto_arima_xgboost')
+
 ```
+
 ---
+
 ### Workflowsets ✨
+
 ```{r}
 wfsets <- workflow_set(
   preproc = list(
@@ -751,7 +758,9 @@ wfsets <- workflow_set(
   cross   = TRUE
 ) 
 ```
+
 ---
+
 👉 El objeto **wfsets** contiene todas las posibles combinaciones de recetas con modelos: 
 
 ```{r}
@@ -859,7 +868,7 @@ wfs_refit <- modeltime_wfs_multirefit(wfs_bests)
 ```
 
 ```{r, echo=FALSE}
-#saveRDS(wfs_refit, 'modelos/wfs_refit.rds')
+# saveRDS(wfs_refit, 'modelos/wfs_refit.rds')
 wfs_refit <- readRDS('modelos/wfs_refit.rds')
 ```
 
