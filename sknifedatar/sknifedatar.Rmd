@@ -9,6 +9,7 @@ output:
     nature:
       navigation: 
         scroll: false
+    self_contained: true
 ---
 class: center
 
